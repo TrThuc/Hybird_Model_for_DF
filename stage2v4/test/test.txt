@@ -1,0 +1,164 @@
+{
+  "image": "D:\\LEARN\\CT491E\\Deepfake_Hybrid_Modelv2\\stage2v4\\datasets\\Celeb-DF-v2\\Celeb-synthesis\\frames\\id34_id26_0002\\310.png",
+  "predicted_class": "fake",
+  "ensemble_probability": {
+    "real": 0.10142122954130173,
+    "fake": 0.8985787034034729
+  },
+  "ensemble_fake_margin": 2.1815319061279297,
+  "branches": {
+    "bad": {
+      "probability": {
+        "real": 0.03692524880170822,
+        "fake": 0.9630746841430664
+      },
+      "fake_margin": 3.261235475540161,
+      "ensemble_margin_contribution": 0.8153088688850403
+    },
+    "sfe": {
+      "probability": {
+        "real": 0.8724016547203064,
+        "fake": 0.1275983452796936
+      },
+      "fake_margin": -1.9223625659942627,
+      "ensemble_margin_contribution": -0.4805906414985657
+    },
+    "gad": {
+      "probability": {
+        "real": 0.03171789273619652,
+        "fake": 0.9682820439338684
+      },
+      "fake_margin": 3.418642520904541,
+      "ensemble_margin_contribution": 0.8546606302261353
+    },
+    "fusion": {
+      "probability": {
+        "real": 0.018549064174294472,
+        "fake": 0.9814509153366089
+      },
+      "fake_margin": 3.9686126708984375,
+      "ensemble_margin_contribution": 0.9921531677246094
+    }
+  },
+  "fusion_ablation": {
+    "bad": {
+      "without_probability": {
+        "real": 0.038014862686395645,
+        "fake": 0.961985170841217
+      },
+      "fake_probability_delta": 0.019465744495391846,
+      "fake_margin_delta": 0.7375907897949219,
+      "absolute_influence_share": 0.4524929102355152
+    },
+    "sfe": {
+      "without_probability": {
+        "real": 0.014927349053323269,
+        "fake": 0.985072672367096
+      },
+      "fake_probability_delta": -0.0036217570304870605,
+      "fake_margin_delta": -0.22090768814086914,
+      "absolute_influence_share": 0.13552116442242168
+    },
+    "gad": {
+      "without_probability": {
+        "real": 0.03567250445485115,
+        "fake": 0.9643275141716003
+      },
+      "fake_probability_delta": 0.017123401165008545,
+      "fake_margin_delta": 0.6715619564056396,
+      "absolute_influence_share": 0.41198592534206313
+    }
+  },
+  "ablation_interpretation": "Positive fake_probability_delta/fake_margin_delta means the branch pushes the fusion result toward fake; negative means toward real. absolute_influence_share is normalized from absolute margin deltas.",
+  "projected_feature_norm": {
+    "bad": 12.203415870666504,
+    "sfe": 11.265764236450195,
+    "gad": 15.706775665283203
+  },
+  "device": "cpu",
+  "config": "D:\\LEARN\\CT491E\\Deepfake_Hybrid_Modelv2\\stage2v4\\configs\\cross_test.yaml",
+  "checkpoint": "D:\\LEARN\\CT491E\\Deepfake_Hybrid_Modelv2\\stage2v4\\checkpoints\\stage2\\epoch_11_frame_auc_0.9835.pth"
+}
+
+
+
+Ảnh này được mô hình dự đoán là fake với độ tin cậy cao:
+fake = 0.8986
+real = 0.1014
+1. Score từng nhánh
+Nhánh	  Fake probability	        Nhận xét
+BAD	  0.9631	                Ủng hộ fake rất mạnh
+SFE	  0.1276	                Ủng hộ real
+GAD	  0.9683	                Ủng hộ fake rất mạnh
+Fusion	  0.9815	                Kết hợp cuối, nghiêng mạnh về fake
+
+
+fake_margin là:
+fake_logit - real_logit
+Số dương: nghiêng về fake.
+Số âm: nghiêng về real.
+Độ lớn càng cao: mức nghiêng càng mạnh.
+Vì vậy:
+BAD: +3.26  -> fake mạnh
+SFE: -1.92  -> real
+GAD: +3.42  -> fake mạnh
+Fusion: +3.97 -> fake rất mạnh
+SFE đang phản biện hai nhánh còn lại, nhưng không đủ mạnh để thay đổi kết luận cuối.
+2. Đóng góp trực tiếp vào ensemble
+ensemble_margin_contribution chỉ là:
+fake_margin của nhánh / 4
+Vì ensemble lấy trung bình 4 logits:
+BAD + SFE + GAD + Fusion
+------------------------
+            4
+Các đóng góp:
+BAD:    +0.815
+SFE:    -0.481
+GAD:    +0.855
+Fusion: +0.992
+Tổng lại xấp xỉ:
+0.815 - 0.481 + 0.855 + 0.992 = 2.181
+Đúng bằng ensemble_fake_margin.
+3. Kết quả bỏ từng nhánh
+Phần này quan trọng hơn projected_feature_norm. Mô hình được chạy lại sau khi xoá một nhánh khỏi fusion classifier.
+Bỏ BAD
+Fake trước: 0.8986
+Fake sau khi bỏ BAD: 0.9620
+fake_probability_delta: +0.0195
+Ở ảnh này, BAD thực tế kéo score fusion về phía fake, nhưng do fusion vốn đã rất mạnh nên việc bỏ BAD làm xác suất fake thay đổi theo nonlinear softmax. Cần đọc cùng với fake_margin_delta:
+fake_margin_delta: +0.7376
+Theo quy ước của script, giá trị dương nghĩa là nhánh đó đóng góp theo hướng fake.
+Bỏ SFE
+Fake trước: 0.8986
+Fake sau khi bỏ SFE: 0.9851
+fake_probability_delta: -0.0036
+fake_margin_delta: -0.2209
+SFE có score riêng nghiêng về real. Khi bỏ SFE, fusion càng nghiêng về fake. Vì vậy SFE là nhánh duy nhất đang làm giảm mức độ fake của kết luận.
+Bỏ GAD
+Fake trước: 0.8986
+Fake sau khi bỏ GAD: 0.9643
+fake_probability_delta: +0.0171
+fake_margin_delta: +0.6716
+GAD là nhánh đóng góp mạnh theo hướng fake, gần tương đương BAD.
+4. Tỷ lệ ảnh hưởng
+BAD: 45.25%
+GAD: 41.20%
+SFE: 13.55%
+Diễn giải:
+BAD và GAD là hai nhánh quyết định chính.
+BAD ảnh hưởng lớn nhất một chút.
+GAD đứng thứ hai và cũng ủng hộ fake rất mạnh.
+SFE đóng góp nhỏ hơn và có xu hướng kéo kết quả về real.
+Đây là tỷ lệ ảnh hưởng dựa trên fake_margin_delta khi ablation, không phải tỷ lệ xác suất tuyệt đối. Nó không có nghĩa BAD “đúng 45%” hay GAD “đúng 41%”.
+5. Projected feature norm
+BAD: 12.20
+SFE: 11.27
+GAD: 15.71
+Giá trị này chỉ cho biết độ lớn vector feature sau projection. Nó không trực tiếp nói nhánh nào quyết định hơn. Một vector có norm lớn chưa chắc tạo ra logit lớn vì còn phụ thuộc trọng số classifier.
+Kết luận cho ảnh này
+Mô hình đang có sự đồng thuận mạnh:
+BAD -> fake
+GAD -> fake
+Fusion -> fake
+SFE -> real nhưng yếu hơn
+Ngay cả khi bỏ BAD, SFE hoặc GAD, xác suất fake vẫn cao hơn 0.96. Vì vậy đây là một dự đoán fake khá ổn định, trong đó BAD và GAD là hai nguồn bằng chứng chính.

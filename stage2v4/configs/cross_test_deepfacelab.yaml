@@ -1,0 +1,39 @@
+seed: 5
+cpu: false
+
+checkpoint: ./checkpoints/stage2/epoch_19_frame_auc_0.9834.pth
+
+architecture:
+  data:
+    image_size: 384
+  bad:
+    model_name: maxvit_tiny_tf_384.in1k
+    checkpoint: ./checkpoints/bad/epoch_18_auc_0.8776.pth
+    feature_dim: 512
+  sfe:
+    model_name: google/siglip2-so400m-patch14-384
+    feature_dim: 1152
+  gad:
+    checkpoint: ./checkpoints/pretrained/convnextv2_tiny_22k_384_ema.pt
+    feature_dim: 768
+    drop_path_rate: 0.1
+  fusion:
+    projection_dim: 512
+    dropout: 0.3
+    num_classes: 2
+
+test:
+  batch_size: 32
+  workers: 2
+  frames_per_video: 32
+  amp: true
+
+datasets:
+  - name: DeepFaceLab
+    json: ./dataset_json/deepfacelab.json
+    dataset_root: .
+    split: test
+    compression: null
+    methods: []
+
+output_dir: ./results/deepfacelab_cross_test

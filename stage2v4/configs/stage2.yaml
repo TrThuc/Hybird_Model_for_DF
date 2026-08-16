@@ -1,0 +1,56 @@
+seed: 5
+balance_classes: true
+data:
+  train_json: ./dataset_json/FaceForensics++.json
+  val_json: ./dataset_json/FaceForensics++.json
+  dataset_root: ./data/FaceForensics++
+  train_split: train
+  val_split: val
+  compression: c23
+  methods: [FF-real, FF-DF, FF-F2F, FF-FS, FF-NT]
+  max_frames_per_video_train: 8
+  max_frames_per_video_val: 8
+  image_size: 384
+  balanced_sampling:
+    # Use every frame; imbalance is handled by weighted cross entropy.
+    train_enabled: false
+    val_enabled: false
+    real_source: FF-real
+    fake_sources: [FF-DF, FF-F2F, FF-FS, FF-NT]
+    real_train: 5746
+    fake_train: 5746
+    real_val: 1118
+    fake_val: 1118
+bad:
+  model_name: maxvit_tiny_tf_384.in1k
+  checkpoint: ./checkpoints/bad/epoch_18_auc_0.8776.pth
+  feature_dim: 512
+sfe:
+  model_name: google/siglip2-so400m-patch14-384
+  feature_dim: 1152
+gad:
+  checkpoint: ./checkpoints/pretrained/convnextv2_tiny_22k_384_ema.pt
+  feature_dim: 768
+  drop_path_rate: 0.2
+fusion:
+  projection_dim: 512
+  dropout: 0.3
+  bad_branch_dropout: 0.15
+  sfe_branch_dropout: 0.20
+  num_classes: 2
+train:
+  epochs: 25
+  batch_size: 16
+  accumulation_steps: 1
+  workers: 2
+  amp: true
+  gad_lr: 0.00003
+  head_lr: 0.0001
+  weight_decay: 0.0005
+  warmup_epochs: 1
+  aux_weight: 0.3 #fusion cao hon thi giam
+  min_lr_ratio: 0.05
+  gradient_clip_norm: 1.0
+output:
+  directory: ./outputs/stage2_h2_full_data
+  keep_checkpoints: 6

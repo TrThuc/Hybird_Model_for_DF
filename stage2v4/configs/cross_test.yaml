@@ -1,0 +1,71 @@
+seed: 5
+cpu: false
+
+checkpoint: ./checkpoints/stage2/epoch_19_frame_auc_0.9834.pth 
+
+architecture:
+  data:
+    image_size: 384
+  bad:
+    model_name: maxvit_tiny_tf_384.in1k
+    checkpoint: ./checkpoints/bad/epoch_18_auc_0.8776.pth
+    feature_dim: 512
+  sfe:
+    model_name: google/siglip2-so400m-patch14-384
+    feature_dim: 1152
+  gad:
+    checkpoint: ./checkpoints/pretrained/convnextv2_tiny_22k_384_ema.pt
+    feature_dim: 768
+    drop_path_rate: 0.1
+  fusion:
+    # Stage-2 checkpoints in this run use 512-dimensional projections
+    # (three branches are concatenated to 1536 features).
+    projection_dim: 512
+    dropout: 0.3
+    num_classes: 2
+
+test:
+  batch_size: 32
+  workers: 2
+  frames_per_video: 32
+  amp: true
+
+datasets:
+  - name: Celeb-DF-v2
+    json: ./dataset_json/Celeb-DF-v2.json
+    dataset_root: ./datasets
+    split: test
+    compression: null
+    methods: []
+  - name: DeepFakeDetection
+    json: ./dataset_json/DeepFakeDetection.json
+    dataset_root: ./datasets
+    split: test
+    compression: c23
+    methods: []
+  - name: DFDC
+    json: ./dataset_json/DFDC.json
+    dataset_root: ./datasets
+    split: test
+    compression: null
+    methods: []
+  - name: DFDCP
+    json: ./dataset_json/DFDCP.json
+    dataset_root: ./datasets
+    split: test
+    compression: null
+    methods: []
+  - name: FaceShifter
+    json: ./dataset_json/FaceShifter.json
+    dataset_root: ./datasets
+    split: test
+    compression: c23
+    methods: []
+  - name: UADFV
+    json: ./dataset_json/UADFV.json
+    dataset_root: ./datasets
+    split: test
+    compression: null
+    methods: []
+
+output_dir: ./results/maxvit_siglip2_convnextv2
