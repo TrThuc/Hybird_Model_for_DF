@@ -1,0 +1,46 @@
+seed: 5
+
+data:
+  root: ./data/FaceForensics++
+  compression: c23
+  frames_per_video:
+    train: 8
+    val: 8
+  source_resolution: 256
+  # maxvit_tiny_tf_384.in1k requires 384x384 inputs.
+  model_resolution: 384
+
+model:
+  name: maxvit_tiny_tf_384.in1k
+  num_classes: 2
+  # Offline mode: load the downloaded PyTorch backbone from this project.
+  pretrained: false
+  checkpoint: ./pretrained/maxvit_tiny_tf_384_in1k.pth
+
+train:
+  epochs: 20
+  source_batch_size:8
+  workers: 2
+  lr: 0.001
+  momentum: 0.9
+  weight_decay: 0.0001
+  sam_rho: 0.05
+  scheduler: warmup_cosine
+  warmup_epochs: 1
+  warmup_start_lr: 0.0001
+  min_lr: 0.00001
+  amp: false
+  require_cuda: true
+  save_top_k: 10
+
+eval:
+  metric: auc
+  balance_fake_frames: false
+  manipulations:
+    - Deepfakes
+    - Face2Face
+    - FaceSwap
+    - NeuralTextures
+
+output:
+  directory: ./outputs/stage1_maxvit
